@@ -1,0 +1,6 @@
+1. clean up invalid tx
+2. compute size and fee for each tx 
+3. build dep graph, tx1 <- tx2 if tx2 can only be valid after tx1 executed 
+4. try out some algo, simple one would be greedy with pq, consistently choose the max fee tx that can be selected, but this would def miss some some large fee tx with long dep of tx before it
+5. build block with selected tx, find the hash 
+6. export result to file 
