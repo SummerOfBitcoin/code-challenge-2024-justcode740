@@ -58,16 +58,25 @@ impl Block {
     pub fn generate_output(&self) {
         let mut output = File::create("output.txt").expect("Failed to create output.txt");
 
-        // Write block header
-        let header_str = serde_json::to_string(&self.header).expect("Failed to serialize header");
-        writeln!(output, "{}", header_str).expect("Failed to write header to file");
+        // Manually construct the header in binary format
+        let mut header_bin = vec![];
+        header_bin.extend(&self.header.version.to_le_bytes()); // Little endian for version
+        header_bin.extend(&hex::decode(&self.header.previous_block_hash).unwrap()); // Hex-decoded previous block hash
+        header_bin.extend(&hex::decode(&self.header.merkle_root).unwrap()); // Hex-decoded merkle root
+        header_bin.extend(&self.header.time.to_le_bytes()); // Little endian for time
+        header_bin.extend(&self.header.bits.to_le_bytes()); // Little endian for bits
+        header_bin.extend(&self.header.nonce.to_le_bytes()); // Little endian for nonce
+
+        // Convert binary header to hexadecimal string
+        let header_hex = hex::encode(header_bin);
+
+        // Write block header in hex format
+        writeln!(output, "{}", header_hex).expect("Failed to write header to file");
 
         // Serialize and write coinbase transaction
         let coinbase_tx = &self.transactions[0];
-        let coinbase_tx_str =
-            serde_json::to_string(coinbase_tx).expect("Failed to serialize coinbase transaction");
-        writeln!(output, "{}", coinbase_tx_str)
-            .expect("Failed to write coinbase transaction to file");
+        let coinbase_tx_str = serde_json::to_string(coinbase_tx).expect("Failed to serialize coinbase transaction");
+        writeln!(output, "{}", coinbase_tx_str).expect("Failed to write coinbase transaction to file");
 
         // Write transaction IDs
         for tx in &self.transactions {
