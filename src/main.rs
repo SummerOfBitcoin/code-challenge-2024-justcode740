@@ -98,6 +98,7 @@ fn main() {
             nonce: 0,
         },
         transactions: valid_tx,
+        txids: vec![],
     };
 
     block.mine(difficulty_target);

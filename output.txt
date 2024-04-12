@@ -1,4 +1,4 @@
-{"version":4,"previous_block_hash":"","merkle_root":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","time":1712867678,"bits":520159231,"nonce":67699}
+04000000000000000000000000000000000000000000000000000000000000000000000077ede06aa0653e969ad56c8d8b828e096205c9026aacc98611bb9fdcc685d882629c1866ffff001f74290000
 {"version":1,"locktime":0,"vin":[{"txid":"","vout":4294967295,"prevout":{"scriptpubkey":"","scriptpubkey_asm":"","scriptpubkey_type":"coinbase","scriptpubkey_address":"","value":0},"scriptsig":"arbitrary data","scriptsig_asm":"","witness":null,"is_coinbase":true,"sequence":4294967295}],"vout":[{"scriptpubkey":"miner's address or script","scriptpubkey_asm":"","scriptpubkey_type":"pay to script hash or pay to public key hash","scriptpubkey_address":"miner's address","value":6250616824}]}
 812b802d700089a9bd8860ea096fc36a4f539afa695f5a074ffcc62a8afb6d8d
 5f28da0c20bcb1004da92c616e98a508c772767f0f991cd44e90c8e74f019b4b
