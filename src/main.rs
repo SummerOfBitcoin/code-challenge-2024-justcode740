@@ -78,7 +78,7 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
     // }
     // res
     println!("{:?}", txs.len());
-    txs[..100].to_vec()
+    txs[..1000].to_vec()
 }
 
 fn main() {
