@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::path::PathBuf;
 
 mod block;
 mod coinbase;
@@ -16,24 +17,28 @@ use crate::coinbase::create_coinbase_transaction;
 // use validate::validate_transaction;
 
 fn read_transactions_from_dir(dir: &Path) -> io::Result<(Vec<Transaction>, usize, usize)> {
+    let mut entries = fs::read_dir(dir)?
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|path| path.is_file()) // Ensure it's a file
+        .collect::<Vec<PathBuf>>();
+
+    // Sort the entries by their path names
+    entries.sort();
+
     let mut transactions = Vec::new();
     let mut total_files = 0;
     let mut failed_parses = 0;
 
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_file() {
-            total_files += 1;
-            match fs::read_to_string(&path) {
-                Ok(data) => match serde_json::from_str::<Transaction>(&data) {
-                    Ok(transaction) => transactions.push(transaction),
-                    Err(_) => {
-                        failed_parses += 1;
-                    }
-                },
-                Err(_) => {}
-            }
+    for path in entries {
+        total_files += 1;
+        println!("{:?}", path);
+        match fs::read_to_string(&path) {
+            Ok(data) => match serde_json::from_str::<Transaction>(&data) {
+                Ok(transaction) => transactions.push(transaction),
+                Err(_) => failed_parses += 1,
+            },
+            Err(_) => {}
         }
     }
 
@@ -72,19 +77,37 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
     //     res.push(txs[i]);
     // }
     // res
-    txs[0..100].to_vec()
+    println!("{:?}", txs.len());
+    txs[..100].to_vec()
 }
 
 fn main() {
     let txs = get_tx();
 
     let mut valid = select_tx_for_block(txs);
+
     let total_fees = valid.iter().fold(0, |acc, x| acc + x.fee());
 
     let br = 6_250_000_000;
-    let cb_tx = create_coinbase_transaction(br, total_fees);
+    let cb_tx = create_coinbase_transaction(br, total_fees, "".to_owned());
     let mut valid_tx = vec![cb_tx];
     valid_tx.append(&mut valid);
+    // for tx in &valid_tx {
+    //     // if tx.calculate_wtxid().unwrap() == "35f1e96e0c00a213134b533d93a6b3cf074c24178b640c1fbdecfe0724455e66" {
+    //     //     println!("{:?}", tx);
+    //     //     println!("{:?}", tx.calculate_txid());
+    //     // }
+    //     println!("{}", tx.calculate_wtxid().unwrap());
+    // }
+    // println!("mai{:?}", valid_tx[1].calculate_txid());
+    // println!("mai{:?}", valid_tx[1].calculate_wtxid());
+
+    // println!("mai{:?}",     valid_tx[1].vin[0].txid);// 000cb561188c762c81f76976f816829424e2af9e0e491c617b7bf41038df3d35
+
+    // 69074bd90317c507b367c40dee722821c8954eeb84c9e24e29050b0c85d1d422
+    // 7533d87ec9e2f0eda1298c2e2e37141c275358c4884fd90fbb0f87d67e5f0ce0
+    // 7533d87ec9e2f0eda1298c2e2e37141c275358c4884fd90fbb0f87d67e5f0ce0
+    // println!("{:?}", valid_tx[1])
 
     let difficulty_target = "0000ffff00000000000000000000000000000000000000000000000000000000";
 
