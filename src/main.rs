@@ -72,13 +72,33 @@ fn get_tx() -> Vec<Transaction> {
 }
 
 fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
-    // let mut res = vec!{};
-    // for i in 0..100 {
-    //     res.push(txs[i]);
-    // }
-    // res
-    println!("{:?}", txs.len());
-    txs[..1600].to_vec()
+    const MAX_BLOCK_WEIGHT: usize = 4_000_000 - 1000; // Standard weight units of a block
+
+    let mut selected_txs: Vec<Transaction> = Vec::new();
+    let mut total_weight = 0;
+
+    // Sort transactions by their fee rate (fee per weight unit) in descending order
+    let mut txs_sorted = txs;
+    txs_sorted.sort_by(|a, b| {
+        let fee_rate_a = a.fee() as f64 / a.weight() as f64;
+        let fee_rate_b = b.fee() as f64 / b.weight() as f64;
+        fee_rate_b.partial_cmp(&fee_rate_a).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Select transactions to maximize fee and fit within block weight
+    for tx in txs_sorted {
+        let tx_weight = tx.weight();
+        if total_weight + tx_weight <= MAX_BLOCK_WEIGHT {
+            selected_txs.push(tx);
+            total_weight += tx_weight;
+        } else {
+            // If adding this transaction exceeds the block weight limit, stop adding.
+            break;
+        }
+    }
+
+    println!("Total transactions selected: {}, Total weight: {}", selected_txs.len(), total_weight);
+    selected_txs
 }
 
 fn main() {
@@ -90,15 +110,10 @@ fn main() {
 
     let br = 6_250_000_000;
     let cb_tx = create_coinbase_transaction(br, total_fees, "".to_owned());
+    println!("cb {}", cb_tx.weight());
     let mut valid_tx = vec![cb_tx];
     valid_tx.append(&mut valid);
-    // for tx in &valid_tx {
-    //     // if tx.calculate_wtxid().unwrap() == "35f1e96e0c00a213134b533d93a6b3cf074c24178b640c1fbdecfe0724455e66" {
-    //     //     println!("{:?}", tx);
-    //     //     println!("{:?}", tx.calculate_txid());
-    //     // }
-    //     println!("{}", tx.calculate_wtxid().unwrap());
-    // }
+    
     // println!("mai{:?}", valid_tx[1].calculate_txid());
     // println!("mai{:?}", valid_tx[1].calculate_wtxid());
 

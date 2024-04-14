@@ -63,7 +63,7 @@ impl Transaction {
 
         true
     }
-
+    
     pub fn fee(&self) -> u64 {
         let mut in_value = 0;
         for input in &self.vin {
@@ -224,6 +224,109 @@ impl Transaction {
                 == "0000000000000000000000000000000000000000000000000000000000000000"
             && self.vin[0].vout == 0xffffffff
     }
+
+    // Calculate the transaction weight
+    pub fn weight(&self) -> usize {
+        let base_size = self.base_size();
+        let total_size = self.total_size();
+        (base_size * 3) + total_size
+    }
+
+    // Calculate the base size of the transaction (size without witness data)
+    fn base_size(&self) -> usize {
+        let mut data = Vec::new();
+
+        // Transaction version
+        data.extend_from_slice(&self.version.to_le_bytes());
+
+        // Inputs
+        data.extend_from_slice(&serialize_varint(self.vin.len() as u64));
+        for input in &self.vin {
+            let prev_txid = hex::decode(&input.txid).unwrap();
+            data.extend(prev_txid.iter().rev());
+            data.extend_from_slice(&input.vout.to_le_bytes());
+            let script = hex::decode(&input.scriptsig).unwrap();
+            data.extend_from_slice(&serialize_varint(script.len() as u64));
+            data.extend(script);
+            data.extend_from_slice(&input.sequence.to_le_bytes());
+        }
+
+        // Outputs
+        data.extend_from_slice(&serialize_varint(self.vout.len() as u64));
+        for output in &self.vout {
+            data.extend_from_slice(&output.value.to_le_bytes());
+            let script = hex::decode(&output.scriptpubkey).unwrap();
+            data.extend_from_slice(&serialize_varint(script.len() as u64));
+            data.extend(script);
+        }
+
+        // Locktime
+        data.extend_from_slice(&self.locktime.to_le_bytes());
+
+        data.len()
+    }
+
+    // Calculate the total size of the transaction (size with witness data)
+    fn total_size(&self) -> usize {
+        let mut data = Vec::new();
+
+        // Transaction version
+        data.extend_from_slice(&self.version.to_le_bytes());
+
+        // Marker and Flag
+        if self.has_witness() {
+            data.push(0x00); // Marker
+            data.push(0x01); // Flag
+        }
+
+        // Inputs
+        data.extend_from_slice(&serialize_varint(self.vin.len() as u64));
+        for input in &self.vin {
+            let prev_txid = hex::decode(&input.txid).unwrap();
+            data.extend(prev_txid.iter().rev());
+            data.extend_from_slice(&input.vout.to_le_bytes());
+            let script = hex::decode(&input.scriptsig).unwrap();
+            data.extend_from_slice(&serialize_varint(script.len() as u64));
+            data.extend(script);
+            data.extend_from_slice(&input.sequence.to_le_bytes());
+        }
+
+        // Outputs
+        data.extend_from_slice(&serialize_varint(self.vout.len() as u64));
+        for output in &self.vout {
+            data.extend_from_slice(&output.value.to_le_bytes());
+            let script = hex::decode(&output.scriptpubkey).unwrap();
+            data.extend_from_slice(&serialize_varint(script.len() as u64));
+            data.extend(script);
+        }
+
+        // Witness data
+        if self.has_witness() {
+            for input in &self.vin {
+                if let Some(witness) = &input.witness {
+                    data.extend_from_slice(&serialize_varint(witness.len() as u64));
+                    for item in witness {
+                        let witness_data = hex::decode(item).unwrap();
+                        data.extend_from_slice(&serialize_varint(witness_data.len() as u64));
+                        data.extend(witness_data);
+                    }
+                } else {
+                    data.push(0x00); // No witness data
+                }
+            }
+        }
+
+        // Locktime
+        data.extend_from_slice(&self.locktime.to_le_bytes());
+
+        data.len()
+    }
+    // Check if the transaction has witness data
+    fn has_witness(&self) -> bool {
+        self.vin.iter().any(|input| input.witness.is_some())
+    }
+
+    
 }
 
 fn serialize_varint(value: u64) -> Vec<u8> {
