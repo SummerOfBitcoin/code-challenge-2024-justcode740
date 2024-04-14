@@ -129,6 +129,14 @@ impl Block {
                 .expect("Failed to write coinbase transaction to file");
         }
 
+        for i  in 0..self.transactions.len() {
+            // if tx.calculate_wtxid().unwrap() == "35f1e96e0c00a213134b533d93a6b3cf074c24178b640c1fbdecfe0724455e66" {
+            //     println!("{:?}", tx);
+            //     println!("{:?}", tx.calculate_txid());
+            // }
+            println!("{} {}", self.txids[i], self.transactions[i].weight());
+        }
+
         // Write transaction IDs
         for txid in &self.txids {
             writeln!(output, "{}", txid).expect("Failed to write txid to file");
