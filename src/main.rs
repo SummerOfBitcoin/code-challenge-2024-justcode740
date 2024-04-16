@@ -84,13 +84,18 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
         let fee_rate_b = b.fee() as f64 / b.weight() as f64;
         fee_rate_b.partial_cmp(&fee_rate_a).unwrap_or(std::cmp::Ordering::Equal)
     });
+    let mut c = 0;
 
     // Select transactions to maximize fee and fit within block weight
     for tx in txs_sorted {
         let tx_weight = tx.weight();
         if total_weight + tx_weight <= MAX_BLOCK_WEIGHT {
             selected_txs.push(tx);
+            c+=1;
             total_weight += tx_weight;
+            if c > 2500 {
+                break;
+            }
         } else {
             // If adding this transaction exceeds the block weight limit, stop adding.
             break;
