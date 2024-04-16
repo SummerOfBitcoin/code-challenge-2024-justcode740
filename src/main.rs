@@ -93,7 +93,7 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
             selected_txs.push(tx);
             c+=1;
             total_weight += tx_weight;
-            if c > 1000 {
+            if c > 2000 {
                 break;
             }
         } else {
