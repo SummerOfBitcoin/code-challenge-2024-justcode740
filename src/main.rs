@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -6,6 +5,7 @@ use std::path::PathBuf;
 
 mod block;
 mod coinbase;
+mod p2pkh;
 mod tx;
 mod validate;
 use tx::Transaction;
@@ -56,14 +56,8 @@ fn get_tx() -> Vec<Transaction> {
         }
         Err(e) => panic!("Error reading transactions: {}", e),
     };
-
-    let mut invalid_transactions = 0;
-    let mut fail = 0;
     let mut valid_txs = vec![];
     for tx in txs {
-        // if let Err(_) = validate_transaction(tx) {
-        //     invalid_transactions += 1;
-        // }
         if tx.is_basic_valid() {
             valid_txs.push(tx);
         }
@@ -82,7 +76,9 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
     txs_sorted.sort_by(|a, b| {
         let fee_rate_a = a.fee() as f64 / a.weight() as f64;
         let fee_rate_b = b.fee() as f64 / b.weight() as f64;
-        fee_rate_b.partial_cmp(&fee_rate_a).unwrap_or(std::cmp::Ordering::Equal)
+        fee_rate_b
+            .partial_cmp(&fee_rate_a)
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
     let mut c = 0;
 
@@ -91,7 +87,7 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
         let tx_weight = tx.weight();
         if total_weight + tx_weight <= MAX_BLOCK_WEIGHT {
             selected_txs.push(tx);
-            c+=1;
+            c += 1;
             total_weight += tx_weight;
             if c > 2000 {
                 break;
@@ -102,7 +98,11 @@ fn select_tx_for_block(txs: Vec<Transaction>) -> Vec<Transaction> {
         }
     }
 
-    println!("Total transactions selected: {}, Total weight: {}", selected_txs.len(), total_weight);
+    println!(
+        "Total transactions selected: {}, Total weight: {}",
+        selected_txs.len(),
+        total_weight
+    );
     selected_txs
 }
 
@@ -115,10 +115,9 @@ fn main() {
 
     let br = 6_250_000_000;
     let cb_tx = create_coinbase_transaction(br, total_fees, "".to_owned());
-    println!("cb {}", cb_tx.weight());
     let mut valid_tx = vec![cb_tx];
     valid_tx.append(&mut valid);
-    
+
     // println!("mai{:?}", valid_tx[1].calculate_txid());
     // println!("mai{:?}", valid_tx[1].calculate_wtxid());
 
@@ -146,10 +145,4 @@ fn main() {
 
     block.mine(difficulty_target);
     block.generate_output();
-
-    // println!("Invalid transactions: {}", invalid_transactions);
-    // println!("Different script types found:");
-    // for script_type in script_types {
-    //     println!("- {}", script_type);
-    // }
 }

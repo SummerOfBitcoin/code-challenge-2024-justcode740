@@ -1,7 +1,5 @@
 use crate::tx::{Output, Transaction};
-use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use sha2::{Digest, Sha256};
 use std::{fs::File, io::Write, time::SystemTime, vec};
 
@@ -129,7 +127,7 @@ impl Block {
                 .expect("Failed to write coinbase transaction to file");
         }
 
-        for i  in 0..self.transactions.len() {
+        for i in 0..self.transactions.len() {
             // if tx.calculate_wtxid().unwrap() == "35f1e96e0c00a213134b533d93a6b3cf074c24178b640c1fbdecfe0724455e66" {
             //     println!("{:?}", tx);
             //     println!("{:?}", tx.calculate_txid());

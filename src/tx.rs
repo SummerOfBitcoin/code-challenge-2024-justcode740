@@ -1,4 +1,4 @@
-use std::{clone, io::Write};
+use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -63,7 +63,7 @@ impl Transaction {
 
         true
     }
-    
+
     pub fn fee(&self) -> u64 {
         let mut in_value = 0;
         for input in &self.vin {
@@ -325,8 +325,6 @@ impl Transaction {
     fn has_witness(&self) -> bool {
         self.vin.iter().any(|input| input.witness.is_some())
     }
-
-    
 }
 
 fn serialize_varint(value: u64) -> Vec<u8> {
